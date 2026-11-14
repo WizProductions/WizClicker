@@ -127,9 +127,6 @@
     <None Include="Resources\Main.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\MouseTargetButton_MiddleButton.png" />
-    <None Include="Resources\MouseTargetButton_LeftButton.png" />
-    <None Include="Resources\MouseTargetButton_RightButton.png" />
     <None Include="Resources\WizClicker.ico" />
   </ItemGroup>
   <ItemGroup>

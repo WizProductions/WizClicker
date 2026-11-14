@@ -191,7 +191,8 @@ public partial class MainForm : Form
 
             if (bIsSimulatingClick)
             {
-                ClickLoopThread = new Thread(ClickLoop);
+                ClickLoopThread              = new Thread(ClickLoop);
+                ClickLoopThread.IsBackground = true;
                 ClickLoopThread.Start();
 
                 TB_State.Text      = WLoc.State_Active;
