@@ -37,7 +37,7 @@
     <StartupObject>WizClicker.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\WizClicker.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\WizClicker_AppIcon_Default.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PresentationCore" />
@@ -127,7 +127,10 @@
     <None Include="Resources\Main.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\WizClicker.ico" />
+    <None Include="Resources\WizClicker_AppIcon_Default.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\WizClicker_AppIcon_Simulating.ico" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="InputSimulatorPlus2" Version="1.0.9" />

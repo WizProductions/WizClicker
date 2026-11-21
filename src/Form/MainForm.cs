@@ -22,8 +22,9 @@ public partial class MainForm : Form
 
         MyKeyListener.OnListeningStoppedEvent += OnKeyListenerStopListen;
 
-        NUD_Cps.Maximum = WAppSettings.MaxCps;
-        TB_State.Text   = "";
+        NUD_Cps.Maximum         = WAppSettings.MaxCps;
+        LB_SimulationState.Text = "";
+        LB_ConfirmMessage.Text       = "";
         TT_Default.SetToolTip(B_FireKeyListen, WLoc.ToolTip_FireKey);
         TT_Default.SetToolTip(B_SimKeyListen, WLoc.ToolTip_SimKey);
         TT_Default.SetToolTip(B_Confirm, WLoc.ToolTip_Confirm);
@@ -63,8 +64,8 @@ public partial class MainForm : Form
     private bool           bIsWaitingSimKey;
     private KeyListener    MyKeyListener;
     private InputSimulator MyInputSimulator;
-    private Thread         ClickLoopThread;
-    private bool           bIsSimulatingClick;
+    private Thread         SimulationLoopThread;
+    private bool           bIsSimulatingStarted;
 
 //==== Custom Toolbar ====\\.
     private bool  bIsDragging;
@@ -148,9 +149,10 @@ public partial class MainForm : Form
     {
         Config.AppConfig ConfigObject = Config.ExtractConfig();
 
-        NUD_Cps.Value = ConfigObject.Cps;
-        FireKey       = ConfigObject.FireKey;
-        SimKey        = ConfigObject.SimKey;
+        NUD_Cps.Value        = ConfigObject.Cps;
+        FireKey              = ConfigObject.FireKey;
+        SimKey               = ConfigObject.SimKey;
+        CB_ToggleMod.Checked = ConfigObject.bToggleMod;
 
         ClickTickRate = (int)Math.Ceiling(1000.0 / ConfigObject.Cps);
     }
@@ -161,15 +163,15 @@ public partial class MainForm : Form
         {
             ClickTickRate = (int)Math.Ceiling(1000.0 / (int)NUD_Cps.Value);
 
-            T_Confirm.Text      = WLoc.Confirm_Success;
-            T_Confirm.ForeColor = WAppSettings.ConfirmTextColor_Success;
+            LB_ConfirmMessage.Text      = WLoc.Confirm_Success;
+            LB_ConfirmMessage.ForeColor = WAppSettings.ConfirmTextColor_Success;
 
-            Config.UpdateConfig(FireKey, SimKey, (int)NUD_Cps.Value);
+            Config.UpdateConfig(FireKey, SimKey, (int)NUD_Cps.Value, CB_ToggleMod.Checked);
         }
         else
         {
-            T_Confirm.Text      = WLoc.Confirm_Failed;
-            T_Confirm.ForeColor = WAppSettings.ConfirmTextColor_Failed;
+            LB_ConfirmMessage.Text      = WLoc.Confirm_Failed;
+            LB_ConfirmMessage.ForeColor = WAppSettings.ConfirmTextColor_Failed;
         }
     }
 
@@ -186,28 +188,35 @@ public partial class MainForm : Form
                 return;
             }
 
-            bIsFireKeyDown     = true;
-            bIsSimulatingClick = !bIsSimulatingClick;
+            bIsFireKeyDown       = true;
+            bIsSimulatingStarted = !bIsSimulatingStarted;
 
-            if (bIsSimulatingClick)
+            if (bIsSimulatingStarted)
             {
-                ClickLoopThread              = new Thread(ClickLoop);
-                ClickLoopThread.IsBackground = true;
-                ClickLoopThread.Start();
+                SimulationLoopThread = SimulationLoopThread = new Thread(CB_ToggleMod.Checked
+                    ? new ThreadStart(HoldLoop)
+                    : new ThreadStart(ClickLoop));
+                SimulationLoopThread.IsBackground = true;
+                SimulationLoopThread.Start();
 
-                TB_State.Text      = WLoc.State_Active;
-                TB_State.ForeColor = Color.FromArgb(255, 90, 0);
+                LB_SimulationState.Text      = WLoc.State_Active;
+                LB_SimulationState.ForeColor = Color.FromArgb(255, 90, 0);
             }
             else
             {
-                if (ClickLoopThread is { IsAlive: true })
+                if (SimulationLoopThread is { IsAlive: true })
                 {
-                    ClickLoopThread.Join(); //Close thread
+                    // Security
+                    SimulationLoopThread.Join(); //Close thread
                 }
+                
+                CancelCurrentStateOfKey();
 
-                TB_State.Text      = WLoc.State_Inactive;
-                TB_State.ForeColor = Color.FromArgb(255, 200, 0);
+                LB_SimulationState.Text      = WLoc.State_Inactive;
+                LB_SimulationState.ForeColor = Color.FromArgb(255, 200, 0);
             }
+            
+            Internal_UpdateIconFromSimulation();
 
             return;
         }
@@ -230,7 +239,7 @@ public partial class MainForm : Form
                 _             => throw new ArgumentException("Not a mouse key")
             };
 
-            while (bIsSimulatingClick)
+            while (bIsSimulatingStarted)
             {
                 ClickMethod();
                 Thread.Sleep(ClickTickRate);
@@ -238,10 +247,90 @@ public partial class MainForm : Form
         }
         else
         {
-            while (bIsSimulatingClick)
+            while (bIsSimulatingStarted)
             {
                 MyInputSimulator.Keyboard.KeyPress((WindowsInput.Native.VirtualKeyCode)SimKey);
                 Thread.Sleep(ClickTickRate);
+            }
+        }
+    }
+
+    private void HoldLoop()
+    {
+        if (IsMouseKey(SimKey))
+        {
+            // Use this switch expression to optimize the click and avoid switch resolve every tick
+            Action HoldMethod = SimKey switch
+            {
+                Keys.LButton  => () => MyInputSimulator.Mouse.LeftButtonDown(),
+                Keys.RButton  => () => MyInputSimulator.Mouse.RightButtonDown(),
+                Keys.MButton  => () => MyInputSimulator.Mouse.MiddleButtonDown(),
+                Keys.XButton1 => () => MyInputSimulator.Mouse.XButtonDown(1),
+                Keys.XButton2 => () => MyInputSimulator.Mouse.XButtonDown(2),
+                _             => throw new ArgumentException("Not a mouse key")
+            };
+
+            while (bIsSimulatingStarted)
+            {
+                // Rerun key?
+                if ((GetAsyncKeyState((int)SimKey) & 0x8000) == 0)
+                {
+                    HoldMethod();
+                }
+
+                Thread.Sleep(20);
+            }
+        }
+        else
+        {
+            while (bIsSimulatingStarted)
+            {
+                // Rerun key?
+                if ((GetAsyncKeyState((int)SimKey) & 0x8000) == 0)
+                {
+                    MyInputSimulator.Keyboard.KeyDown((WindowsInput.Native.VirtualKeyCode)SimKey);
+                }
+
+                Thread.Sleep(20);
+            }
+        }
+    }
+
+    private void CancelCurrentStateOfKey()
+    {
+        if ((GetAsyncKeyState((int)SimKey) & 0x8000) == 0) return;
+        
+        switch (SimKey)
+        {
+            case Keys.LButton:
+            {
+                MyInputSimulator.Mouse.LeftButtonUp();
+                return;
+            }
+            case Keys.RButton:
+            {
+                MyInputSimulator.Mouse.RightButtonUp();
+                return;
+            }
+            case Keys.MButton:
+            {
+                MyInputSimulator.Mouse.MiddleButtonUp();
+                return;
+            }
+            case Keys.XButton1:
+            {
+                MyInputSimulator.Mouse.XButtonUp(1);
+                return;
+            }
+            case Keys.XButton2:
+            {
+                MyInputSimulator.Mouse.XButtonUp(2);
+                return;
+            }
+            default:
+            {
+                MyInputSimulator.Keyboard.KeyUp((WindowsInput.Native.VirtualKeyCode)SimKey);
+                break;
             }
         }
     }
@@ -286,13 +375,25 @@ public partial class MainForm : Form
         }
     }
 
+    private void Internal_UpdateIconFromSimulation()
+    {
+        if (bIsSimulatingStarted)
+        {
+            this.Icon = Properties.Resources.SimulationAppIcon;
+        }
+        else
+        {
+            this.Icon = Properties.Resources.DefaultAppIcon;
+        }
+    }
+
     public static bool IsMouseKey(Keys Key)
         => Key >= Keys.LButton && Key <= Keys.XButton2;
 
 //==== Events ====\\.
     private void B_FireKeyListen_Click(object sender, EventArgs e)
     {
-        if (bIsSimulatingClick) return;
+        if (bIsSimulatingStarted) return;
 
         MyKeyListener.StartListenKey();
         bIsWaitingFireKey = true;
@@ -302,7 +403,7 @@ public partial class MainForm : Form
 
     private void B_SimKeyListen_Click(object sender, EventArgs e)
     {
-        if (bIsSimulatingClick) return;
+        if (bIsSimulatingStarted) return;
 
         MyKeyListener.StartListenKey();
         bIsWaitingSimKey = true;

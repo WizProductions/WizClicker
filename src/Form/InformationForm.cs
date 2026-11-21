@@ -68,5 +68,10 @@ public partial class InformationForm : Form
     private void ToolsBar_Close_InfForm_MouseLeave(object sender, EventArgs e)
         => ToolsBar_Close_InfForm.BackgroundImage = WizClicker.Properties.Resources.Main_close;
 #endregion
+    
+    private void OnFormLoaded(object sender, EventArgs e)
+    {
+        LB_Version.Text = $"WizClicker {this.ProductVersion}";
+    }
 }
 }

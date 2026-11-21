@@ -23,9 +23,10 @@ internal static class Config
         public Keys FireKey { get; set; }
         public Keys SimKey { get; set; }
         public int Cps { get; set; }
+        public bool bToggleMod { get; set; }
 
         public bool IsDefault()
-            => (FireKey == WAppSettings.DefaultFireKey && SimKey == WAppSettings.DefaultSimKey && Cps == WAppSettings.DefaultCps);
+            => (FireKey == WAppSettings.DefaultFireKey && SimKey == WAppSettings.DefaultSimKey && Cps == WAppSettings.DefaultCps && !bToggleMod);
 
         public bool IsValid()
             => (Cps > 0 && Cps <= WAppSettings.MaxCps);
@@ -35,7 +36,7 @@ internal static class Config
 //##-------------------------------- METHODS --------------------------------##
 //#############################################################################
 
-    public static AppConfig UpdateConfig(Keys InFireKey, Keys InSimKey, int InCps)
+    public static AppConfig UpdateConfig(Keys InFireKey, Keys InSimKey, int InCps, bool bInToggleMod = false)
     {
         // Make sure to config folder existing
         if (!Directory.Exists(WAppSettings.LocalDataFolderPath))
@@ -48,7 +49,8 @@ internal static class Config
         {
             FireKey = InFireKey,
             SimKey  = InSimKey,
-            Cps     = InCps
+            Cps     = InCps,
+            bToggleMod = bInToggleMod
         };
 
         // Write into a JSON file
@@ -60,6 +62,7 @@ internal static class Config
         WriteLog("FireKey = " + InFireKey);
         WriteLog("SimKey = " + InSimKey);
         WriteLog("CPS = " + InCps);
+        WriteLog("ToggleMod = " + bInToggleMod);
 
         return ConfigObject;
     }

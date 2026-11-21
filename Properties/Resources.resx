@@ -142,7 +142,10 @@
   <data name="Main_reduce_hover" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Main_reduce_hover.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="WizClicker" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\WizClicker.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="DefaultAppIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\WizClicker_AppIcon_Default.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="SimulationAppIcon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\WizClicker_AppIcon_Simulating.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
