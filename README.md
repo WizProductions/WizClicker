@@ -2,7 +2,7 @@
   <img src="https://storage.wizurth.ovh/Pictures/Wiz%20Productions/WizProductions_Icon_256x256.png" alt="HEADER" width="256" height="256">
 </p>
 <p align="center">
-    <img src="https://www.codefactor.io/repository/github/wizproductions/wizclicker/badge" alt="CodeFactor" />
+    <img src="https://storage.wizurth.ovh/Pictures/Wiz%20Productions/CodeFactor/aplus.svg" alt="CodeFactor" />
 </p>
 <h1 align="center">WizClicker</h1>
 
